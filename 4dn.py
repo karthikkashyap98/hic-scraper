@@ -4,6 +4,8 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import pandas as pd
 
+TARGET_FILES = ["hic", "bedpe", "bw", "bedgraph", "cool", "tsv", "csv", "bed"]
+
 def setup_session():
     """Configure requests session with headers and retry policy"""
     session = requests.Session()
@@ -50,17 +52,17 @@ def fetch_experiment_sets(session):
         # ('experiments_in_set.experiment_type.display_title', 'sci-Hi-C'),
         # ('experiments_in_set.experiment_type.display_title', 'sn-Hi-C'),
         # ('experiments_in_set.experiment_type.display_title', 'single cell Hi-C'),
-        ('experiments_in_set.experiment_type.display_title', 'PLAC-seq'),
-        ('experiments_in_set.experiment_type.display_title', 'in situ ChIA-PET'),
-        ('experiments_in_set.experiment_type.display_title', 'HiChIP'),
-        ('experiments_in_set.experiment_type.display_title', 'ChIA-PET'),
+        # ('experiments_in_set.experiment_type.display_title', 'PLAC-seq'),
+        # ('experiments_in_set.experiment_type.display_title', 'in situ ChIA-PET'),
+        # ('experiments_in_set.experiment_type.display_title', 'HiChIP'),
+        # ('experiments_in_set.experiment_type.display_title', 'ChIA-PET'),
         ('experimentset_type', 'replicate'),
         ('type', 'ExperimentSetReplicate'),
     ]
 
     processed_titles = set()
     experiment_data = []
-    page_size = 50
+    page_size = 25 
     current_page = 0
 
     while True:
@@ -92,6 +94,7 @@ def fetch_experiment_sets(session):
                 )
                 exp_response.raise_for_status()
                 print("Fetching experiment: ", title)
+                # print("")
                 experiment_data.append(exp_response.json())
                 processed_titles.add(title)
                 
@@ -119,20 +122,23 @@ def process_experiment_data(experiment_data):
             "Description": item.get("description", ""),
             "Study": item.get("study", ""),
             "Condition": item.get("condition", ""),
-            "Source Lab": item.get("lab", {}).get("display_title", "")
+            "Source Lab": item.get("lab", {}).get("display_title", ""),
+            "4DN Link": "https://data.4dnucleome.org/files-processed/" + item.get("display_title", ""),
         }
         
-        # Find all hic files
-        hic_files = [
-            f for f in item.get("processed_files", [])
-            if f.get("file_format", {}).get("display_title") == "hic"
+        # Extract files
+        files = [
+            f for f in item.get("processed_files", []) 
+            if f.get("file_format", {}).get("display_title") in TARGET_FILES
         ]
+
+        print(f"Title: {item.get('dataset_label', 'N/A')}, Found {len(files)} files")
         
         # Create one row per file or one row if no files
-        if not hic_files:
+        if not files:
             continue
         else:
-            for file in hic_files:
+            for file in files:
                 processed_rows.append({
                     **base_data,
                     "File": "https://data.4dnucleome.org" + file.get("href", ""),

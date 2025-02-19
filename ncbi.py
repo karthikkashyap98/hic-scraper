@@ -22,9 +22,7 @@ def fetch_gds_ids(search_term=".hic"):
 
 def parse_dataset_xml(xml_content):
     """Parse EFetch XML response for GDS details"""
-    print(type(xml_content), xml_content)
 
-    return
     root = ET.fromstring(xml_content)
     dataset = {
         "title": root.findtext(".//DocumentSummary/Title"),
@@ -65,7 +63,6 @@ def parse_geo_entry(content):
             value = value.strip()
 
 
-            print(f"key: {key}, value: {value}")
 
             if key == 'Submitter supplied':
                 entry['Description'] = value
@@ -114,7 +111,6 @@ def fetch_dataset_details(gds_id):
 
     response = requests.get(base_url, params=params)
     response.raise_for_status()
-    # print("response", response.content)
     return parse_geo_entry(response.content)
 
 
@@ -125,7 +121,6 @@ def process_geo_datasets():
     # Get list of dataset IDs
     gds_ids = fetch_gds_ids()
     print(f"Found {len(gds_ids)} datasets")
-    # print(gds_ids)
 
     # Save IDs for future reference
     pd.Series(gds_ids).to_csv("geo_dataset_ids.csv", index=False)
@@ -136,7 +131,6 @@ def process_geo_datasets():
         try:
             print(f"Processing {idx+1}/{len(gds_ids)}: {gds_id}")
             dataset = fetch_dataset_details(gds_id)
-            print("DataSet: ", dataset)
 
             all_data.append(dataset)
 
@@ -156,7 +150,6 @@ def process_geo_datasets():
 if __name__ == "__main__":
     df = process_geo_datasets()
 
-    print(df)
 
     # Save to Excel
     df.to_excel("geo_datasets.xlsx", index=False)

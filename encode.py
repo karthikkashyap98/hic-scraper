@@ -6,6 +6,8 @@ import pandas as pd
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
+FILE_FORMATS = ["hic", "bedpe", "bw", "bedgraph", "cool", "tsv", "csv", "bed", "bigWig"]
+
 # Shared utility functions
 def setup_session():
     """Configure requests session with headers and retry policy"""
@@ -32,13 +34,19 @@ def save_ids(ids, filename):
 
 # ENCODE-specific functions
 def fetch_experiment_list(session):
-    """Fetch initial list of experiments"""
+    """Fetch initial list of experiments with specific assay titles"""
     url = "https://www.encodeproject.org/search/"
     params = {
         "type": "Experiment",
         "control_type!": "*",
         "status": "released",
         "perturbed": "false",
+        "assay_title": [
+            "intact Hi-C",
+            "in situ Hi-C",
+            "dilution Hi-C",
+            "SPRITE"
+        ],
         "limit": "all",
         "format": "json"
     }
@@ -67,6 +75,9 @@ def process_encode_data(experiment):
     
     processed = []
     for file in experiment.get("files", []):
+        if file.get("file_format", "") not in FILE_FORMATS:
+            continue
+        
         processed.append({
             **base_data,
             "File URL": f"https://www.encodeproject.org{file.get('href', '')}",
@@ -91,10 +102,6 @@ def main():
     # Process all experiments
     all_data = []
     for idx, exp in enumerate(experiments):
-        if counter == 25:
-            break
-        
-        
         counter += 1
         try:
             print(f"Processing {idx+1}/{len(experiments)}: {exp['@id']}")
@@ -104,6 +111,7 @@ def main():
         except Exception as e:
             print(f"Failed to process {exp['@id']}: {str(e)}")
     
+    print("Done! Processed", counter, "experiments")
     # Create DataFrame and save
     df = pd.DataFrame(all_data)
     df.to_excel("encode_experiments.xlsx", index=False)

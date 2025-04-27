@@ -1,2 +1,10 @@
 env
 *.xlsx
+*.json
+*.csv
+*.log
+__pycache__
+*.pyc
+*.pkl
+*.egg-info
+.DS_Store

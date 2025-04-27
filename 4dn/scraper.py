@@ -144,6 +144,9 @@ def process_experiment_data(experiment_data):
                     **base_data,
                     "File": "https://data.4dnucleome.org" + file.get("href", ""),
                     "File Size": file.get("file_size", ""),
+                    "File Type": file.get("file_type", {}),
+                    "File Type Detailed": file.get("file_type_detailed", {}), 
+                    "File Description": file.get("file_format", {}).get("display_title", ""),
                     "Open Data URL": file.get("open_data_url", "N/A"),
                     "Bio Source": file.get("track_and_facet_info", {}).get("biosource_name", "N/A")
                 })

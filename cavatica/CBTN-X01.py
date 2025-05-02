@@ -14,7 +14,7 @@ def get_auth_token():
     token = os.environ.get("SBG_AUTH_TOKEN")
     if not token:
         print("Missing environment variable 'SBG_AUTH_TOKEN'.")
-        print("You can create a token here: https://docs.sevenbridges.com/docs/the-authentication-token")
+        print("You can create a token here: https://docs.cavatica.org/docs/get-your-authentication-token")
         token = input("Please enter your CAVATICA API token: ").strip()
     return token
 
@@ -38,7 +38,9 @@ def get_file_list(token):
         items = data.get("items", [])
         if not items:
             break
-
+        
+        items = [item for item in items if ".vcf" in item["name"].lower()]
+        
         files.extend(items)
         offset += PAGE_LIMIT
         time.sleep(RATE_LIMIT_SECONDS)
@@ -80,9 +82,6 @@ def main():
         count += 1
         tqdm.write(f"Downloading {count}/{len(file_list)}: {file_name}")
         
-        if count == 10:
-            print("Stopping after 10 files for testing.")
-            break
         if file_path.exists():
             tqdm.write(f"Skipping (already exists): {file_name}")
             continue
